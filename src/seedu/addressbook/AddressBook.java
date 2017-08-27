@@ -602,10 +602,14 @@ public class AddressBook {
         System.out.print(LINE_PREFIX + "Enter command: ");
         String inputLine = SCANNER.nextLine();
         // silently consume all blank and comment lines
-        while (inputLine.trim().isEmpty() || inputLine.trim().charAt(0) == INPUT_COMMENT_MARKER) {
+        while (isNotEmptyComment(inputLine)) {
             inputLine = SCANNER.nextLine();
         }
         return inputLine;
+    }
+
+    private static boolean isNotEmptyComment(String inputLine) {
+        return inputLine.trim().isEmpty() || inputLine.trim().charAt(0) == INPUT_COMMENT_MARKER;
     }
 
    /*
