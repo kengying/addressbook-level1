@@ -621,8 +621,8 @@ public class AddressBook {
      */
     private static void sortInAlphabeticalOrderIgnoreCase(ArrayList<String[]> toBeDisplayed) {
         Collections.sort(toBeDisplayed, new Comparator<String[]>() {
-            public int compare(String[] strings, String[] otherStrings) {
-                return strings[0].compareToIgnoreCase(otherStrings[0]);
+            public int compare(String[] nameToBeCompared1, String[] nameToBeCompared2) {
+                return nameToBeCompared1[0].compareToIgnoreCase(nameToBeCompared2[0]);
 
             }
         });
