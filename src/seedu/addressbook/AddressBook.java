@@ -598,10 +598,10 @@ public class AddressBook {
      * @return feedback display message for the operation result
      */
     private static String executeListAllPersonsInAddressBookInAlphabeticalOrder() {
-        boolean sorted = true;
+        boolean isSorted = true;
         ArrayList<String[]> toBeDisplayed = new ArrayList<String[]>(getAllPersonsInAddressBook());
         sortInAlphabeticalOrderIgnoreCase(toBeDisplayed);
-        showToUser(toBeDisplayed, true);
+        showToUser(toBeDisplayed, isSorted);
         return getMessageForPersonsDisplayedSummary(toBeDisplayed);
     }
 
@@ -683,10 +683,10 @@ public class AddressBook {
      * Shows the list of persons to the user.
      * The list will be indexed, starting from 1.
      */
-    private static void showToUser(ArrayList<String[]> persons, boolean sorted) {
+    private static void showToUser(ArrayList<String[]> persons, boolean isSorted) {
         String listAsString = getDisplayString(persons);
         showToUser(listAsString);
-        if (!sorted)
+        if (!isSorted)
             updateLatestViewedPersonListing(persons);
     }
 
@@ -849,11 +849,11 @@ public class AddressBook {
      * @return true if the given person was found and deleted in the model
      */
     private static boolean deletePersonFromAddressBook(String[] exactPerson) {
-        final boolean changed = ALL_PERSONS.remove(exactPerson);
-        if (changed) {
+        final boolean isChanged = ALL_PERSONS.remove(exactPerson);
+        if (isChanged) {
             savePersonsToFile(getAllPersonsInAddressBook(), storageFilePath);
         }
-        return changed;
+        return isChanged;
     }
 
     /**
