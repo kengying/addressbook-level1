@@ -68,6 +68,7 @@ public class AddressBook {
      * =========================================================================
      */
     private static final String MESSAGE_ADDED = "New person added: %1$s, Phone: %2$s, Email: %3$s";
+    private static final String MESSAGE_UPDATED = "Person update: %1$s, Phone: %2$s, Email: %3$s";
     private static final String MESSAGE_ADDRESSBOOK_CLEARED = "Address book has been cleared!";
     private static final String MESSAGE_COMMAND_HELP = "%1$s: %2$s";
     private static final String MESSAGE_COMMAND_HELP_PARAMETERS = "\tParameters: %1$s";
@@ -138,6 +139,14 @@ public class AddressBook {
     private static final String COMMAND_SORT_WORD = "sort";
     private static final String COMMAND_SORT_DESC = "Displays persons in alphabetical order.";
     private static final String COMMAND_SORT_EXAMPLE = COMMAND_SORT_WORD;
+
+
+    private static final String COMMAND_EDIT_WORD = "edit";
+    private static final String COMMAND_EDIT_DESC = "Edit person's details";
+    private static final String COMMAND_EDIT_PARAMETERS = "NAME "
+            + PERSON_DATA_PREFIX_PHONE + "PHONE_NUMBER "
+            + PERSON_DATA_PREFIX_EMAIL + "EMAIL";
+    private static final String COMMAND_EDIT_EXAMPLE = COMMAND_EDIT_WORD + " John Doe p/98765432 e/johnd@gmail.com";
 
     private static final String DIVIDER = "===================================================";
 
@@ -377,6 +386,8 @@ public class AddressBook {
         switch (commandType) {
         case COMMAND_ADD_WORD:
             return executeAddPerson(commandArgs);
+        case COMMAND_EDIT_WORD:
+            return executeEditPerson(commandArgs);
         case COMMAND_FIND_WORD:
             return executeFindPersons(commandArgs);
         case COMMAND_LIST_WORD:
@@ -449,6 +460,59 @@ public class AddressBook {
         return String.format(MESSAGE_ADDED,
                 getNameFromPerson(addedPerson), getPhoneFromPerson(addedPerson), getEmailFromPerson(addedPerson));
     }
+
+    /**
+     * Adds a person (specified by the command args) to the address book.
+     * The entire command arguments string is treated as a string representation of the person to add.
+     *
+     * @param commandArgs full command args string from the user
+     * @return feedback display message for the operation result
+     */
+    private static String executeEditPerson(String commandArgs) {
+        // try decoding a person from the raw args
+        final Optional<String[]> decodeResult = decodePersonFromString(commandArgs);
+
+        // checks if args are valid (decode result will not be present if the person is invalid)
+        if (!decodeResult.isPresent()) {
+            return getMessageForInvalidCommandInput(COMMAND_EDIT_WORD, getUsageInfoForEditCommand());
+        } else {
+            ArrayList<String[]> toBeUpdated = getAllPersonsInAddressBook();
+            int index = extractIndex(commandArgs);
+            if (index != -1) {
+                updateToAddressBook(index, decodeResult.get());
+                return getMessageForSuccessfulUpdatePerson(decodeResult.get());
+            }
+            else {
+                return "";
+            }
+        }
+    }
+
+    private static int extractIndex(String commandArgs) {
+        final Set<String> keywords = extractKeywordsFromFindPersonArgs(commandArgs);
+        for (int i = 0; i < getAllPersonsInAddressBook().size(); i++) {
+            String[] person = getAllPersonsInAddressBook().get(i);
+            final Set<String> wordsInName = new HashSet<>(splitByWhitespace(getNameFromPerson(person)));
+            if (!Collections.disjoint(loweredCase(wordsInName), loweredCase(keywords))) {
+                return i;
+            }
+        }
+
+        return -1;
+    }
+
+    /**
+     * Constructs a feedback message for a successful update person command execution.
+     *
+     * @param updatedPerson person who was successfully updated
+     * @return successful update person feedback message
+     * @see #executeAddPerson(String)
+     */
+    private static String getMessageForSuccessfulUpdatePerson(String[] updatedPerson) {
+        return String.format(MESSAGE_UPDATED,
+                getNameFromPerson(updatedPerson), getPhoneFromPerson(updatedPerson), getEmailFromPerson(updatedPerson));
+    }
+
 
     /**
      * Finds and lists all persons in address book whose name contains any of the argument keywords.
@@ -851,6 +915,16 @@ public class AddressBook {
     }
 
     /**
+     * Update a person to the address book. Saves changes to storage file.
+     *
+     * @param personDetails to update
+     */
+    private static void updateToAddressBook(int index, String[] personDetails) {
+        ALL_PERSONS.set(index, personDetails);
+        savePersonsToFile(getAllPersonsInAddressBook(), storageFilePath);
+    }
+
+    /**
      * Deletes the specified person from the addressbook if it is inside. Saves any changes to storage file.
      *
      * @param exactPerson the actual person inside the address book (exactPerson == the person to delete in the full list)
@@ -1148,6 +1222,7 @@ public class AddressBook {
      */
     private static String getUsageInfoForAllCommands() {
         return getUsageInfoForAddCommand() + LS
+                + getUsageInfoForEditCommand() + LS
                 + getUsageInfoForFindCommand() + LS
                 + getUsageInfoForViewCommand() + LS
                 + getUsageInfoForSortCommand() + LS
@@ -1164,6 +1239,15 @@ public class AddressBook {
         return String.format(MESSAGE_COMMAND_HELP, COMMAND_ADD_WORD, COMMAND_ADD_DESC) + LS
                 + String.format(MESSAGE_COMMAND_HELP_PARAMETERS, COMMAND_ADD_PARAMETERS) + LS
                 + String.format(MESSAGE_COMMAND_HELP_EXAMPLE, COMMAND_ADD_EXAMPLE) + LS;
+    }
+
+    /**
+     * Returns the string for showing 'edit' command usage instruction
+     */
+    private static String getUsageInfoForEditCommand() {
+        return String.format(MESSAGE_COMMAND_HELP, COMMAND_EDIT_WORD, COMMAND_EDIT_DESC) + LS
+                + String.format(MESSAGE_COMMAND_HELP_PARAMETERS, COMMAND_EDIT_PARAMETERS) + LS
+                + String.format(MESSAGE_COMMAND_HELP_EXAMPLE, COMMAND_EDIT_EXAMPLE) + LS;
     }
 
     /**
@@ -1234,8 +1318,8 @@ public class AddressBook {
     /**
      * Removes prefix from the given fullString if prefix occurs at the start of the string.
      *
-     * @param fullString    Parameter as a string
-     * @param prefix Parameter sign to be removed
+     * @param fullString Parameter as a string
+     * @param prefix     Parameter sign to be removed
      * @return string without the sign
      */
     private static String removePrefixSign(String fullString, String prefix) {
